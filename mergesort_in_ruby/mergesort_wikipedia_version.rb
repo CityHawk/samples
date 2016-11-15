@@ -1,28 +1,14 @@
 def merge(left, right)
+  puts "left #{left.inspect}; right #{right.inspect}"
   out = []
-  i = 0
-  j = 0
-  while i < left.size && j < right.size
-    if left[i] < right[j]
-      out << left[i]
-      i += 1
+  until left.empty? || right.empty?
+    if left.first < right.first
+      out << left.shift
     else
-      out << right[j]
-      j += 1
+      out << right.shift
     end
   end
-
-  while i < left.size
-    out << left[i]
-    i += 1
-  end
-
-  while j < right.size
-    out << right[j]
-    j += 1
-  end
-
-  out
+  out.concat(left).concat(right)
 end
 
 def mergesort(array)
@@ -37,8 +23,9 @@ end
 a = [29, 4, 39, 59, 7, 48, 5, 14, 83, 77, 25, 62, 82, 57, 35, 1, 39, 20, 4,
      78, 33, 72, 64, 73, 81, 77, 61, 16, 73, 39]
 
-a_sorted = mergesort(a)
+# a = %w(49 34 39 65 100 61 62 46 36 89).map(&:to_i)
 
-puts a_sorted.inspect
+sorted_a = mergesort(a)
+puts sorted_a.inspect
 
-fail 'Sorting order fail' if a_sorted != a.sort()
+fail 'Sorting fail' if sorted_a != a.sort

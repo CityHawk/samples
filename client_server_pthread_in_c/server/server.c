@@ -6,20 +6,35 @@
 #include <netinet/in.h>
 #include <netinet/ip.h> /* superset of previous */
 #include <arpa/inet.h>
-#include <error.h>
+#include <errno.h>
+#include <pthread.h>
 #include "function.h"
 
-int main(int argc, char *argv[]) {
-    char word[] = "test";
-    reverse(word);
-    printf("%s\n", word);
+struct server_data {
+    int sock;
+    char *buf;
+    struct sockaddr_in *clnt_addr;
+    socklen_t len;
+};
 
+void *sendReply(void *sd_in) {
+    struct server_data *sd = (struct server_data *) sd_in;
+
+    printf("%s:%d\n", inet_ntoa(sd->clnt_addr->sin_addr), sd->clnt_addr->sin_port);
+    reverse(sd->buf);
+    socklen_t addrlen = sizeof(sd->clnt_addr);
+    ssize_t o = sendto(sd->sock, sd->buf, strlen(sd->buf), 0, (struct sockaddr *) sd->clnt_addr, sd->len);
+    if (o < 0)
+        perror("ERROR in sendto");
+    free(sd);
+    pthread_exit(0);
+}
+
+int main(int argc, char *argv[]) {
     int sfd;
-    int clnt;
     int nport;
     /* struct addrinfo *s_addr, hints; */
     struct sockaddr_in srvr_addr, clnt_addr;
-    char buf[1024];
 
     // fill in the datastructure
     srvr_addr.sin_family = AF_INET;
@@ -35,19 +50,31 @@ int main(int argc, char *argv[]) {
     }
 
     printf("server: %s\n", inet_ntoa(srvr_addr.sin_addr));
+    char buf[1024];
+    socklen_t addrlen;
 
     while (1) {
-        socklen_t addrlen;
         memset(&clnt_addr,0,sizeof(clnt_addr));
+        memset(buf,0,1024);
         addrlen = sizeof(clnt_addr);
         ssize_t n = recvfrom(sfd, buf, 1024, 0, (struct sockaddr *) &clnt_addr, &addrlen);
         if (n > 0) {
-            printf("%s:%d\n", inet_ntoa(clnt_addr.sin_addr), clnt_addr.sin_port);
-            printf("%s\n", buf);
-            reverse(buf);
-            ssize_t o = sendto(sfd, buf, strlen(buf), 0, (struct sockaddr *) &clnt_addr, addrlen);
-            if (o < 0) 
-                perror("ERROR in sendto");
+            pthread_t thread1;
+            char *local_buf = malloc(strlen(buf));
+            strcpy(local_buf, buf);
+            struct sockaddr_in local_sockaddr;
+            memcpy(&local_sockaddr, &clnt_addr, sizeof(clnt_addr));
+            struct server_data *sd = malloc(sizeof(struct server_data));
+            sd->sock = sfd;
+            sd->buf = local_buf;
+            sd->clnt_addr = &local_sockaddr;
+            sd->len = addrlen;
+
+            if (pthread_create(&thread1, NULL, sendReply, sd)) {
+                perror("Thread creation");
+            }
+            /* pthread_join(thread1, NULL); */
+            /* sendReply(sd); */
         } else {
             perror("Error in recvfrom");
         }

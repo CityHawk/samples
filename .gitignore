@@ -1,3 +1,4 @@
 */.vagrant/*
 client_server_pthread_in_c/bin/server
 client_server_pthread_in_c/bin/client
+strace_in_c/strace

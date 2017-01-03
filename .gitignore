@@ -2,3 +2,5 @@
 client_server_pthread_in_c/bin/server
 client_server_pthread_in_c/bin/client
 strace_in_c/strace
+fork_vs_pthread/fork
+fork_vs_pthread/thread

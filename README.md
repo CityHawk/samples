@@ -1,0 +1,1 @@
+This is the repo with some experiments I've carry. Absolutely nothing important here, that is just the place for me to try out stuff, maybe well known to everybody. It's like "write a particular sorting algo in whatever language" or "compare fork and thread based program syscall traces"
